@@ -1,0 +1,38 @@
+# =============================================================================
+# Production Overrides for Docker Compose
+# =============================================================================
+# Use with: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# =============================================================================
+
+services:
+  api:
+    # Use gunicorn in production for better performance
+    command: >
+      gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 4 --threads 2 --timeout 120 --access-logfile - --error-logfile - --capture-output
+    environment:
+      - DEBUG=false
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost}
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  gradio:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

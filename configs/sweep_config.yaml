@@ -1,0 +1,69 @@
+# SciBERT Sweep Configuration for arXiv Paper Classification
+# Based on SOTA practices and SciBERT paper recommendations
+
+program: scripts/train_sweep.py
+method: bayes
+metric:
+  name: best_val_f1_score
+  goal: maximize
+
+parameters:
+  model_type:
+    value: "scibert"
+  
+  # Dataset size: 10k samples for faster sweep iterations
+  limit_samples:
+    value: 10000
+  
+  # Learning rate: SciBERT paper recommends 2e-5, BERT paper suggests 2e-5 to 5e-5
+  # Lower rates prevent catastrophic forgetting of pretrained knowledge
+  learning_rate:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 5e-5
+  
+  # Batch size: BERT paper uses 32, constrained by GPU memory
+  # 16 or 32 are standard for transformer fine-tuning
+  batch_size:
+    values: [16, 32]
+  
+  # Epochs: BERT fine-tuning typically needs 2-4 epochs
+  # More epochs can cause overfitting, use early stopping
+  epochs:
+    values: [3, 4, 5]
+  
+  # Dropout: Standard BERT uses 0.1, slight increase can help regularization
+  dropout_rate:
+    distribution: uniform
+    min: 0.1
+    max: 0.2
+  
+  # Focal loss gamma: 2.0 is standard, higher values focus more on hard examples
+  focal_gamma:
+    distribution: uniform
+    min: 1.5
+    max: 2.5
+  
+  # Focal loss alpha: For sparse multi-label, use higher alpha (>0.5) to weight positives more
+  # Standard is 0.25 but that penalizes positive predictions which hurts recall
+  focal_alpha:
+    distribution: uniform
+    min: 0.5
+    max: 0.75
+  
+  # Warmup: typically 6-10% of training steps for transformers
+  warmup_ratio:
+    distribution: uniform
+    min: 0.06
+    max: 0.1
+  
+  # Max sequence length: 256 is good balance for arxiv abstracts
+  # 512 is expensive and rarely needed for abstracts
+  max_length:
+    values: [256]
+
+early_terminate:
+  type: hyperband
+  min_iter: 2
+  eta: 2
+  s: 2

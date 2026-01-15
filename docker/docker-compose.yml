@@ -1,0 +1,66 @@
+# =============================================================================
+# ArXiv Classifier System - Docker Compose
+# =============================================================================
+# Orchestrates the API and Gradio demo services
+# 
+# Usage:
+#   Development:  docker compose up --build
+#   Production:   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   Logs:         docker compose logs -f
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Django REST API
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: arxiv-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount artifacts for model access (read-only in production)
+      - ../artifacts:/app/artifacts:ro
+      # Mount configs (read-only)
+      - ../configs:/app/configs:ro
+    environment:
+      - MODEL_PATH=/app/artifacts/test_scibert.keras
+      - MODEL_TYPE=scibert
+      - DEBUG=false
+      - ALLOWED_HOSTS=localhost,127.0.0.1,api
+      - DJANGO_SETTINGS_MODULE=core.settings
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - arxiv-network
+
+  # ---------------------------------------------------------------------------
+  # Gradio Demo Interface
+  # ---------------------------------------------------------------------------
+  gradio:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gradio
+    container_name: arxiv-gradio
+    ports:
+      - "7860:7860"
+    environment:
+      - API_URL=http://api:8000
+      - GRADIO_SERVER_NAME=0.0.0.0
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - arxiv-network
+
+networks:
+  arxiv-network:
+    driver: bridge

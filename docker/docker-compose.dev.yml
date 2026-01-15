@@ -1,0 +1,37 @@
+# =============================================================================
+# Development Overrides for Docker Compose
+# =============================================================================
+# Use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Features:
+#   - Hot reload with source code mounting
+#   - Debug mode enabled
+#   - Port mapping for debugging
+# =============================================================================
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+      target: runtime # Skip any optimization stages for faster builds
+    volumes:
+      # Mount source code for hot reload
+      - ../src:/app/src:ro
+      - ../backend:/app/backend:ro
+      - ../configs:/app/configs:ro
+      - ../artifacts:/app/artifacts:ro
+    environment:
+      - DEBUG=true
+      - ALLOWED_HOSTS=*
+    command: python backend/manage.py runserver 0.0.0.0:8000 --noreload
+
+  gradio:
+    volumes:
+      # Mount source code for hot reload
+      - ../gradio_demo.py:/app/gradio_demo.py:ro
+      - ../src:/app/src:ro
+      - ../configs:/app/configs:ro
+    environment:
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - API_URL=http://api:8000

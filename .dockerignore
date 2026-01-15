@@ -1,0 +1,74 @@
+# =============================================================================
+# Docker ignore file - Exclude unnecessary files from build context
+# =============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.manifest
+*.spec
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Data and large files (mount these instead)
+data/
+notebooks/
+wandb/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker files (avoid recursive builds, but keep requirements.txt)
+docker/Dockerfile*
+docker/docker-compose*.yml
+docker/README.md
+docker/.env*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# uv lock (we copy this explicitly)
+# Keep uv.lock for reproducible builds

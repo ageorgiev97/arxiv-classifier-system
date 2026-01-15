@@ -1,0 +1,60 @@
+# =============================================================================
+# ArXiv Classifier API - Production Dockerfile
+# =============================================================================
+# Multi-stage build for optimized image size
+# Uses pip with Docker-specific requirements for Linux compatibility
+# =============================================================================
+
+FROM python:3.10-slim AS builder
+
+WORKDIR /app
+
+# Copy Docker-specific requirements (uses standard tensorflow, not tensorflow-macos)
+COPY docker/requirements.txt ./requirements.txt
+
+# Create virtual environment and install dependencies
+RUN python -m venv /app/.venv && \
+    /app/.venv/bin/pip install --no-cache-dir --upgrade pip && \
+    /app/.venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# =============================================================================
+# Production image
+# =============================================================================
+FROM python:3.10-slim AS runtime
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src \
+    PATH="/app/.venv/bin:$PATH"
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=builder /app/.venv /app/.venv
+
+# Copy application code
+COPY src/ ./src/
+COPY backend/ ./backend/
+COPY configs/ ./configs/
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health/ || exit 1
+
+# Expose the API port
+EXPOSE 8000
+
+# Default command - run Django with gunicorn in production
+# Override with development settings if needed
+CMD ["python", "backend/manage.py", "runserver", "0.0.0.0:8000"]
