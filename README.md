@@ -13,7 +13,14 @@ This system automatically classifies research paper abstracts into one or more o
 - Production REST API: Django REST Framework with health checks and batch inference
 - Interactive demo: Gradio-based web interface for testing
 - Experiment tracking: Integrated Weights & Biases (WandB) logging
+- Hyperparameter optimization: W&B Sweeps for automated tuning
+- Docker support: Multi-stage builds with dev/prod configurations
 - GPU acceleration: Apple Silicon MPS and CUDA support
+- Comprehensive evaluation: 10+ metrics including F1, ROC-AUC, mAP, and per-class analysis
+- Focal loss: Custom loss function for handling class imbalance
+- Batch inference: API supports batch predictions for efficiency
+- Test suite: Pytest-based testing for API and model validation
+- HuggingFace integration: Direct dataset loading from HuggingFace Hub
 
 ## Project Structure
 
